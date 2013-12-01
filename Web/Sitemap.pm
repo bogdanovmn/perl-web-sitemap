@@ -9,9 +9,12 @@ use Web::Sitemap::File;
 
 use constant {
 	URL_LIMIT => 50000,
+	FILE_SIZE_LIMIT => 10*1024*1024,
+	FILE_SIZE_LIMIT_MIN => 1024*1024,
 	
 	DEFAULT_PREFIX => 'sitemap.',
 	DEFAULT_TAG => 'tag',
+	DEFAULT_INDEX_NAME => 'sitemap.xml',
 
 	XML_HEAD => '<?xml version="1.0" encoding="UTF-8"?>',
 	XML_MAIN_NAMESPACE => 'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'
@@ -24,10 +27,17 @@ sub new {
 		output_dir => $p{output_dir},
 		loc_prefix => $p{loc_prefix} || '',
 		tags => {},
+		gzip => $p{gzip} || 1,
 		url_limit => $p{url_limit} || URL_LIMIT,
+		file_size_limit => $p{file_size_limit} || FILE_SIZE_LIMIT,
 		prefix => $p{prefix} || DEFAULT_PREFIX,
-		default_tag => $p{default_tag} || DEFAULT_TAG
+		default_tag => $p{default_tag} || DEFAULT_TAG,
+		index_name => $p{index_name} || DEFAULT_INDEX_NAME
 	};
+
+	if ($self->{file_size_limit} < FILE_SIZE_LIMIT_MIN) {
+		$self->{file_size_limit} = FILE_SIZE_LIMIT_MIN;
+	}
 
 	unless (-w $self->{output_dir}) {
 		die "Can't write to output_dir: ". $self->{output_dir};
@@ -41,15 +51,16 @@ sub add {
 	my $tag = $p{tag} || DEFAULT_TAG;
 
 	unless (ref $url_list eq 'ARRAY') {
-		die 'SITEMAP::add($url_list): $url_list must be array ref';
+		die 'Web::Sitemap::add($url_list): $url_list must be array ref';
 	}
 
 	for my $url (@$url_list) {
-		$self->_file_handle($tag)->append(Web::Sitemap::Url->new($url)->to_xml_string);
-		$self->{tags}->{$tag}->{url_count}++;
 		if ($self->_file_limit_near($tag)) {
 			$self->_next_file($tag);
 		}
+		my $fh = $self->_file_handle($tag);
+		$self->{tags}->{$tag}->{file_size} = $fh->append(Web::Sitemap::Url->new($url)->to_xml_string);
+		$self->{tags}->{$tag}->{url_count}++;
 	}
 }
 
@@ -58,7 +69,7 @@ sub finish {
 
 	return unless keys $self->{tags};
 
-	open INDEX_FILE, '>'. $self->{output_dir}. '/sitemap.xml' or die "Can't open file! $!\n";
+	open INDEX_FILE, '>'. $self->{output_dir}. '/'. $self->{index_name} or die "Can't open file! $!\n";
 
 	print INDEX_FILE XML_HEAD;
 	printf INDEX_FILE "\n<sitemapindex %s>\n", XML_MAIN_NAMESPACE;
@@ -74,7 +85,22 @@ sub finish {
 
 sub _file_limit_near {
 	my ($self, $tag) = @_;
-	return $self->{tags}->{$tag}->{url_count} > ($self->{url_limit} - 1);
+
+	return 0 unless defined $self->{tags}->{$tag};
+
+	#printf("tag: %s.%d; url: %d; gzip_size: %d (%d)\n",
+	#	$tag,
+	#	$self->{tags}->{$tag}->{page},
+	#	$self->{tags}->{$tag}->{url_count},
+	#	$self->{tags}->{$tag}->{file_size},
+	#	$self->{file_size_limit}
+	#);
+
+	return (
+		$self->{tags}->{$tag}->{url_count} >= $self->{url_limit}
+		||
+		$self->{tags}->{$tag}->{file_size} >= $self->{file_size_limit}
+	);
 }
 
 sub _set_new_file {
@@ -89,10 +115,11 @@ sub _file_handle {
 		$self->{tags}->{$tag} = {
 			page => 1,
 			url_count => 0,
-			size => 0
+			file_size => 0
 		};
 		$self->_set_new_file($tag); 
 	}
+
 	return $self->{tags}->{$tag}->{file};
 }
 
@@ -102,7 +129,7 @@ sub _next_file {
 	$self->_close_file($tag);
 	$self->{tags}->{$tag}->{page}++;
 	$self->{tags}->{$tag}->{url_count} = 0;
-	$self->{tags}->{$tag}->{size} = 0;
+	$self->{tags}->{$tag}->{file_size} = 0;
 	$self->_set_new_file($tag); 
 }
 
@@ -114,7 +141,7 @@ sub _close_file {
 
 sub _file_name {
 	my ($self, $tag, $page) = @_;
-	return $self->{prefix}. $tag. '.'. ($page || $self->{tags}->{$tag}->{page}). '.xml.gz'; 
+	return $self->{prefix}. $tag. '.'. ($page || $self->{tags}->{$tag}->{page}). '.xml'. ($self->{gzip} ? '.gz' : ''); 
 }
 
 

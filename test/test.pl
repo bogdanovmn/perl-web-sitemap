@@ -37,7 +37,9 @@ my @img_urls = (
 		images => { 
 			loc_list => [
 				{ loc => 'http://img122.ru/', caption => 'image #1' },
-				{ loc => 'http://img222.ru', caption => 'image #2' }
+				{ loc => 'http://img133.ru/', caption => 'image #2' },
+				{ loc => 'http://img144.ru/', caption => 'image #3' },
+				{ loc => 'http://img222.ru', caption => 'image #4' }
 			] 
 		} 
 	}
@@ -45,9 +47,10 @@ my @img_urls = (
 
 my $g = Web::Sitemap->new(
 	output_dir => $FindBin::Bin,
-	url_limit => 111
+	url_limit => 1,
+	file_size_limit => 200
 );
 
 $g->add(\@urls, tag => 'test_tag');
 $g->add(\@img_urls, tag => 'with_images');
-$g->finish(exclude_from_index => ['with_images']);
+$g->finish;
