@@ -70,7 +70,7 @@ sub add {
 sub finish {
 	my ($self, %p) = @_;
 
-	return unless keys $self->{tags};
+	return unless keys %{$self->{tags}};
 
 	open INDEX_FILE, '>'. $self->{output_dir}. '/'. $self->{index_name} or die "Can't open file! $!\n";
 
