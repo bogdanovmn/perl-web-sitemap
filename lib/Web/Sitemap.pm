@@ -1,5 +1,7 @@
 package Web::Sitemap;
 
+$VERSION = '0.01';
+
 use strict;
 use warnings;
 use utf8;
@@ -19,6 +21,7 @@ use constant {
 	XML_HEAD => '<?xml version="1.0" encoding="UTF-8"?>',
 	XML_MAIN_NAMESPACE => 'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'
 };
+
 
 sub new {
 	my ($class, %p) = @_;
