@@ -1,5 +1,7 @@
 package Web::Sitemap::Url;
 
+$VERSION = '0.01';
+
 use strict;
 use warnings;
 use utf8;

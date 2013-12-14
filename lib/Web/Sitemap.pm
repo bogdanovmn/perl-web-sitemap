@@ -1,6 +1,25 @@
 package Web::Sitemap;
 
-$VERSION = '0.01';
+$VERSION = '0.02';
+
+=head1 NAME
+ Web::Sitemap - Simple way to generate sitemap files with paging support.
+ Now it always use Gzip compress.
+=cut
+
+=head1 SYNOPSIS
+ use Web::Sitemap;
+ 
+ my $sm = Web::Sitemap->new(
+	output_dir => '/path/to/sitemap'
+ );
+
+ $sm->add(\@url_list);
+ $sm->add(\@url_list, {tag => 'articles'});
+ $sm->add(\@url_list, {tag => 'users'});
+
+ $sm->finish;
+=cut
 
 use strict;
 use warnings;
