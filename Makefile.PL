@@ -10,5 +10,6 @@ WriteMakefile(
     ABSTRACT     => 'Create sitemap files',
     PREREQ_PM    => {
                      'Test::Simple' => 0.44,
+					 'IO::Compress::Gzip' => 0
                     },
 );
