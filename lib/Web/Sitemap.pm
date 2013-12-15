@@ -1,24 +1,50 @@
 package Web::Sitemap;
 
-$VERSION = '0.02';
+$VERSION = '0.03';
 
 =head1 NAME
+ 
  Web::Sitemap - Simple way to generate sitemap files with paging support.
- Now it always use Gzip compress.
+
 =cut
 
 =head1 SYNOPSIS
+ 
+ Each instance of the class Web::Sitemap is manage of one index file.
+ Now it always use Gzip compress.
+
+
  use Web::Sitemap;
  
  my $sm = Web::Sitemap->new(
-	output_dir => '/path/to/sitemap'
+	output_dir => '/path/for/sitemap',
+	
+	# Options
+
+	loc_prefix => 'http://my_doamin.com',
+	prefix => 'sitemap.',
+	default_tag => 'my_tag',
+	index_name => 'sitemap.xml'
  );
 
  $sm->add(\@url_list);
- $sm->add(\@url_list, {tag => 'articles'});
- $sm->add(\@url_list, {tag => 'users'});
+ 
+
+ # When adding a new portion of URL, you can specify a label for the file in which these will be URL
+ 
+ $sm->add(\@url_list1, {tag => 'articles'});
+ $sm->add(\@url_list2, {tag => 'users'});
+ 
+
+ # If in the process of filling the file number of URL's will exceed the limit of 50 000 URL or the file size is larger than 10MB, the file will be rotate
+
+ $sm->add(\@url_list3, {tag => 'articles'});
+
+ 
+ # After calling finish() method will create an index file, which will link to files with URL's
 
  $sm->finish;
+
 =cut
 
 use strict;
