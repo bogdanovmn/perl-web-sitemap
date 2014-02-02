@@ -28,7 +28,8 @@ sub new {
 
 sub append {
 	my ($self, $string) = @_;
-	
+
+	utf8::encode($string);
 	$self->{gzip_handle}->print($string);
 	$self->{gzip_handle}->flush(Z_PARTIAL_FLUSH);
 

@@ -107,7 +107,9 @@ sub add {
 			$self->_next_file($tag);
 		}
 		my $fh = $self->_file_handle($tag);
-		$self->{tags}->{$tag}->{file_size} = $fh->append(Web::Sitemap::Url->new($url)->to_xml_string);
+		my $data = Web::Sitemap::Url->new($url)->to_xml_string;
+		$fh->append($data);
+		$self->{tags}->{$tag}->{file_size} += length $data;
 		$self->{tags}->{$tag}->{url_count}++;
 	}
 }
@@ -196,9 +198,106 @@ sub _file_name {
 1;
 
 
+=head1 DESCRIPTION
+
+Also support for Google images format:
+
+	my @img_urls = (
+		
+		# Foramt 1
+		{ 
+			loc => 'http://test1.ru/', 
+			images => { 
+				caption_format => sub { 
+					my ($iterator_value) = @_; 
+					return sprintf('Вася - фото %d', $iterator_value); 
+				},
+				loc_list => [
+					'http://img1.ru/', 
+					'http://img2.ru'
+				] 
+			} 
+		},
+
+		# Foramt 2
+		{ 
+			loc => 'http://test11.ru/', 
+			images => { 
+				caption_format_simple => 'Вася - фото',
+				loc_list => ['http://img11.ru/', 'http://img21.ru'] 
+			} 
+		},
+
+		# Format 3
+		{ 
+			loc => 'http://test122.ru/', 
+			images => { 
+				loc_list => [
+					{ loc => 'http://img122.ru/', caption => 'image #1' },
+					{ loc => 'http://img133.ru/', caption => 'image #2' },
+					{ loc => 'http://img144.ru/', caption => 'image #3' },
+					{ loc => 'http://img222.ru', caption => 'image #4' }
+				] 
+			} 
+		}
+	);
 
 
+	# Result:
 
+	<?xml version="1.0" encoding="UTF-8"?>
+	<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+	<url>
+		<loc>http://test1.ru/</loc>
+		<image:image>
+			<loc>http://img1.ru/</loc>
+			<caption><![CDATA[Вася - фото 1]]></caption>
+		</image:image>
+		<image:image>
+			<loc>http://img2.ru</loc>
+			<caption><![CDATA[Вася - фото 2]]></caption>
+		</image:image>
+	</url>
+	<url>
+		<loc>http://test11.ru/</loc>
+		<image:image>
+			<loc>http://img11.ru/</loc>
+			<caption><![CDATA[Вася - фото 1]]></caption>
+		</image:image>
+		<image:image>
+			<loc>http://img21.ru</loc>
+			<caption><![CDATA[Вася - фото 2]]></caption>
+		</image:image>
+	</url>
+	<url>
+		<loc>http://test122.ru/</loc>
+		<image:image>
+			<loc>http://img122.ru/</loc>
+			<caption><![CDATA[image #1]]></caption>
+		</image:image>
+		<image:image>
+			<loc>http://img133.ru/</loc>
+			<caption><![CDATA[image #2]]></caption>
+		</image:image>
+		<image:image>
+			<loc>http://img144.ru/</loc>
+			<caption><![CDATA[image #3]]></caption>
+		</image:image>
+		<image:image>
+			<loc>http://img222.ru</loc>
+			<caption><![CDATA[image #4]]></caption>
+		</image:image>
+	</url>
+	</urlset>
+
+=cut
+
+
+=head1 AUTHOR
+
+Mikhail N Bogdanov C<< <mbogdanov at cpan.org > >>
+
+=cut
 
 
 
