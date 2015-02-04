@@ -19,18 +19,31 @@ our $VERSION = '0.9';
  my $sm = Web::Sitemap->new(
 	output_dir => '/path/for/sitemap',
 	
-	# Options
+	### Options ###
 
 	temp_dir    => '/path/to/tmp',
 	loc_prefix  => 'http://my_doamin.com',
-	default_tag => 'my_tag',                          # mark for grouping urls
 	index_name  => 'sitemap',
-	mobile      => 1,                                 # add <mobile:mobile/> inside <url>, and appropriate namespace (Google standard)
-	images      => 1,                                 # add appropriate namespace (Google standard)
-	namespace   => 'xmlns:some_namespace_name="..."'  # additional namespaces (scalar or array ref) for <urlset>
+	file_prefix => 'sitemap.',
 	
-	file_loc_prefix  => 'http://my_doamin.com',       # location prefix for files-parts of the sitemap (default is loc_prefix value)
-	file_prefix      => 'sitemap.',
+	# mark for grouping urls
+	default_tag => 'my_tag',
+	
+	
+	# add <mobile:mobile/> inside <url>, and appropriate namespace (Google standard)
+	mobile      => 1,
+	
+	# add appropriate namespace (Google standard)
+	images      => 1,
+	
+	# additional namespaces (scalar or array ref) for <urlset>
+	namespace   => 'xmlns:some_namespace_name="..."',
+	
+	# location prefix for files-parts of the sitemap (default is loc_prefix value)
+	file_loc_prefix  => 'http://my_doamin.com',
+
+	# specify data input charset
+	charset => 'utf8',
 
 	move_from_temp_action => sub { 
 		my ($temp_file_name, $public_file_name) = @_;
@@ -70,6 +83,7 @@ use bytes;
 use File::Temp;
 use File::Copy;
 use IO::Compress::Gzip qw/gzip $GzipError/;
+use Encode;
 
 use Web::Sitemap::Url;
 
@@ -109,6 +123,7 @@ sub new {
 		mobile          => $p{mobile}          || 0,
 		images          => $p{images}          || 0,
 		namespace       => $p{namespace},
+		charset         => $p{charset}         || 'utf8',
 
 		move_from_temp_action => $p{move_from_temp_action}
 	};
@@ -290,7 +305,7 @@ sub _file_handle {
 sub _append {
 	my ($self, $tag, $data) = @_;
 
-	$self->_file_handle($tag)->print($data);
+	$self->_file_handle($tag)->print(Encode::encode($self->{charset}, $data));
 	$self->{tags}->{$tag}->{file_size} += bytes::length $data;
 }
 
