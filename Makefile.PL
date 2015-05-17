@@ -12,4 +12,16 @@ WriteMakefile(
                      'Test::Simple' => 0.44,
 					 'IO::Compress::Gzip' => 0
                     },
+    META_MERGE   => {
+                     'meta-spec'  => {
+                                      'version' => 2,
+                                     },
+                     'resources'  => {
+                                      'repository' => {
+                                                       'type' => 'git',
+                                                       'url'  => 'https://github.com/bogdanovmn/perl-web-sitemap.git',
+                                                       'web'  => 'https://github.com/bogdanovmn/perl-web-sitemap',
+                                                      },
+                                     },
+                    },
 );
