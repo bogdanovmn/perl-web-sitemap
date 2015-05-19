@@ -1,6 +1,6 @@
 package Web::Sitemap;
 
-our $VERSION = '0.9';
+our $VERSION = '0.901';
 
 =head1 NAME
  
@@ -93,8 +93,8 @@ use constant {
 	FILE_SIZE_LIMIT_MIN => 1024 * 1024,
 
 	DEFAULT_FILE_PREFIX => 'sitemap.',
-	DEFAULT_TAG        => 'tag',
-	DEFAULT_INDEX_NAME => 'sitemap',
+	DEFAULT_TAG         => 'tag',
+	DEFAULT_INDEX_NAME  => 'sitemap',
 
 	XML_HEAD             => '<?xml version="1.0" encoding="UTF-8"?>',
 	XML_MAIN_NAMESPACE   => 'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"',
