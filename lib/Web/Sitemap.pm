@@ -1,6 +1,6 @@
 package Web::Sitemap;
 
-our $VERSION = '0.901';
+our $VERSION = '0.902';
 
 =head1 NAME
  
@@ -145,10 +145,6 @@ sub new {
 		die 'output_dir expected!';
 	}
 	
-	unless (-w $self->{output_dir}) {
-		die sprintf "Can't write to output_dir '%s' (error: %s)", $self->{output_dir}, $!;
-	}
-
 	if ($self->{temp_dir} and not -w $self->{temp_dir}) {
 		die sprintf "Can't write to temp_dir '%s' (error: %s)", $self->{temp_dir}, $!;
 	}
