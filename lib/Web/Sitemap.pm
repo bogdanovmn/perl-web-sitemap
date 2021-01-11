@@ -3,51 +3,51 @@ package Web::Sitemap;
 our $VERSION = '0.902';
 
 =head1 NAME
- 
+
  Web::Sitemap - Simple way to generate sitemap files with paging support
 
 =cut
 
 =head1 SYNOPSIS
- 
+
  Each instance of the class Web::Sitemap is manage of one index file.
  Now it always use Gzip compress.
 
 
  use Web::Sitemap;
- 
+
  my $sm = Web::Sitemap->new(
 	output_dir => '/path/for/sitemap',
-	
+
 	### Options ###
 
 	temp_dir    => '/path/to/tmp',
 	loc_prefix  => 'http://my_doamin.com',
 	index_name  => 'sitemap',
 	file_prefix => 'sitemap.',
-	
+
 	# mark for grouping urls
 	default_tag => 'my_tag',
-	
-	
+
+
 	# add <mobile:mobile/> inside <url>, and appropriate namespace (Google standard)
 	mobile      => 1,
-	
+
 	# add appropriate namespace (Google standard)
 	images      => 1,
-	
+
 	# additional namespaces (scalar or array ref) for <urlset>
 	namespace   => 'xmlns:some_namespace_name="..."',
-	
+
 	# location prefix for files-parts of the sitemap (default is loc_prefix value)
 	file_loc_prefix  => 'http://my_doamin.com',
 
 	# specify data input charset
 	charset => 'utf8',
 
-	move_from_temp_action => sub { 
+	move_from_temp_action => sub {
 		my ($temp_file_name, $public_file_name) = @_;
-	
+
 		# ...some action...
 		#
 		# default behavior is
@@ -57,19 +57,19 @@ our $VERSION = '0.902';
  );
 
  $sm->add(\@url_list);
- 
+
 
  # When adding a new portion of URL, you can specify a label for the file in which these will be URL
- 
+
  $sm->add(\@url_list1, tag => 'articles');
  $sm->add(\@url_list2, tag => 'users');
- 
+
 
  # If in the process of filling the file number of URL's will exceed the limit of 50 000 URL or the file size is larger than 10MB, the file will be rotate
 
  $sm->add(\@url_list3, tag => 'articles');
 
- 
+
  # After calling finish() method will create an index file, which will link to files with URL's
 
  $sm->finish;
@@ -110,10 +110,10 @@ sub new {
 	my $self = {
 		output_dir      => $p{output_dir},
 		temp_dir        => $p{temp_dir},
-		
+
 		loc_prefix      => $p{loc_prefix} || '',
 		tags            => {},
-		
+
 		url_limit       => $p{url_limit}       || URL_LIMIT,
 		file_size_limit => $p{file_size_limit} || FILE_SIZE_LIMIT,
 		file_prefix     => $p{file_prefix}     || DEFAULT_FILE_PREFIX,
@@ -144,7 +144,7 @@ sub new {
 	unless ($self->{output_dir}) {
 		die 'output_dir expected!';
 	}
-	
+
 	if ($self->{temp_dir} and not -w $self->{temp_dir}) {
 		die sprintf "Can't write to temp_dir '%s' (error: %s)", $self->{temp_dir}, $!;
 	}
@@ -158,7 +158,7 @@ sub new {
 
 sub add {
 	my ($self, $url_list, %p) = @_;
-	
+
 	my $tag = $p{tag} || DEFAULT_TAG;
 
 	if (ref $url_list ne 'ARRAY') {
@@ -166,15 +166,15 @@ sub add {
 	}
 
 	for my $url (@$url_list) {
-		my $data = (__PACKAGE__. '::Url')->new(	$url, 
-			mobile     => $self->{mobile}, 
+		my $data = (__PACKAGE__. '::Url')->new(	$url,
+			mobile     => $self->{mobile},
 			loc_prefix => $self->{loc_prefix},
 		)->to_xml_string;
 
 		if ($self->_file_limit_near($tag, bytes::length $data)) {
 			$self->_next_file($tag);
 		}
-		
+
 		$self->_append_url($tag, $data);
 	}
 }
@@ -201,7 +201,7 @@ sub finish {
 	close INDEX_FILE;
 
 	$self->_move_from_temp(
-		$index_temp_file_name, 
+		$index_temp_file_name,
 		$self->{output_dir}. '/'. $self->{index_name}. '.xml'
 	);
 }
@@ -215,7 +215,7 @@ sub _move_from_temp {
 		$self->{move_from_temp_action}($temp_file_name, $public_file_name);
 	}
 	else {
-		File::Copy::move($temp_file_name, $public_file_name) 
+		File::Copy::move($temp_file_name, $public_file_name)
 			or die sprintf 'move %s -> %s error: %s', $temp_file_name, $public_file_name, $!;
 	}
 }
@@ -234,8 +234,8 @@ sub _file_limit_near {
 	#);
 
 	return (
-		$self->{tags}->{$tag}->{url_count} >= $self->{url_limit} 
-		|| 
+		$self->{tags}->{$tag}->{url_count} >= $self->{url_limit}
+		||
 		($self->{tags}->{$tag}->{file_size} + $new_portion_size) >= ($self->{file_size_limit} - 200) # 200 - на закрывающие теги в конце файла (с запасом)
 	);
 }
@@ -244,44 +244,44 @@ sub _temp_file {
 	my ($self) = @_;
 
 	return File::Temp->new(
-		UNLINK => 1, 
-		$self->{temp_dir} 
-			? ( DIR => $self->{temp_dir} ) 
+		UNLINK => 1,
+		$self->{temp_dir}
+			? ( DIR => $self->{temp_dir} )
 			: ()
 	);
 }
 
 sub _set_new_file {
 	my ($self, $tag) = @_;
-	
+
 	my $temp_file = $self->_temp_file;
 
 	$self->{tags}->{$tag}->{page}++;
 	$self->{tags}->{$tag}->{url_count} = 0;
 	$self->{tags}->{$tag}->{file_size} = 0;
-	$self->{tags}->{$tag}->{file} = IO::Compress::Gzip->new($temp_file->filename) 
+	$self->{tags}->{$tag}->{file} = IO::Compress::Gzip->new($temp_file->filename)
 		or die "gzip failed: $GzipError\n";
-	$self->{tags}->{$tag}->{file}->autoflush; 
-	$self->{tags}->{$tag}->{temp_file} = $temp_file; 
+	$self->{tags}->{$tag}->{file}->autoflush;
+	$self->{tags}->{$tag}->{temp_file} = $temp_file;
 	#
 	# Не проверяем тут файл на превышение размера, потому что файл пустой,
-	# и врядли начальные теги превысят хотябы 1Мб 
+	# и врядли начальные теги превысят хотябы 1Мб
 	#
 	$self->_append(
-		$tag, 
+		$tag,
 		sprintf(
-			"%s\n<urlset %s>", 
-				XML_HEAD, 
-				join(' ', 
-					XML_MAIN_NAMESPACE, 
+			"%s\n<urlset %s>",
+				XML_HEAD,
+				join(' ',
+					XML_MAIN_NAMESPACE,
 					$self->{mobile}
 						? XML_MOBILE_NAMESPACE
 						: (),
 					$self->{images}
 						? XML_IMAGES_NAMESPACE
 						: (),
-					$self->{namespace} 
-						? @{$self->{namespace}} 
+					$self->{namespace}
+						? @{$self->{namespace}}
 						: ()
 				)
 		)
@@ -290,7 +290,7 @@ sub _set_new_file {
 
 sub _file_handle {
 	my ($self, $tag) = @_;
-	
+
 	unless (exists $self->{tags}->{$tag}) {
 		$self->_set_new_file($tag);
 	}
@@ -324,7 +324,7 @@ sub _close_file {
 
 	$self->_append($tag, "\n</urlset>");
 	$self->_file_handle($tag)->close;
-	
+
 	$self->_move_from_temp(
 		$self->{tags}->{$tag}->{temp_file}->filename,
 		$self->{output_dir}. '/'. $self->_file_name($tag)
@@ -344,42 +344,42 @@ sub _file_name {
 Also support for Google images format:
 
 	my @img_urls = (
-		
+
 		# Foramt 1
-		{ 
-			loc => 'http://test1.ru/', 
-			images => { 
-				caption_format => sub { 
-					my ($iterator_value) = @_; 
-					return sprintf('Vasya - foto %d', $iterator_value); 
+		{
+			loc => 'http://test1.ru/',
+			images => {
+				caption_format => sub {
+					my ($iterator_value) = @_;
+					return sprintf('Vasya - foto %d', $iterator_value);
 				},
 				loc_list => [
-					'http://img1.ru/', 
+					'http://img1.ru/',
 					'http://img2.ru'
-				] 
-			} 
+				]
+			}
 		},
 
 		# Foramt 2
-		{ 
-			loc => 'http://test11.ru/', 
-			images => { 
+		{
+			loc => 'http://test11.ru/',
+			images => {
 				caption_format_simple => 'Vasya - foto',
-				loc_list => ['http://img11.ru/', 'http://img21.ru'] 
-			} 
+				loc_list => ['http://img11.ru/', 'http://img21.ru']
+			}
 		},
 
 		# Format 3
-		{ 
-			loc => 'http://test122.ru/', 
-			images => { 
+		{
+			loc => 'http://test122.ru/',
+			images => {
 				loc_list => [
 					{ loc => 'http://img122.ru/', caption => 'image #1' },
 					{ loc => 'http://img133.ru/', caption => 'image #2' },
 					{ loc => 'http://img144.ru/', caption => 'image #3' },
 					{ loc => 'http://img222.ru', caption => 'image #4' }
-				] 
-			} 
+				]
+			}
 		}
 	);
 
