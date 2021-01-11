@@ -159,7 +159,7 @@ sub new {
 sub add {
 	my ($self, $url_list, %p) = @_;
 
-	my $tag = $p{tag} || DEFAULT_TAG;
+	my $tag = $p{tag} || $self->{tag};
 
 	if (ref $url_list ne 'ARRAY') {
 		die __PACKAGE__.'::add($url_list): $url_list must be array ref';
