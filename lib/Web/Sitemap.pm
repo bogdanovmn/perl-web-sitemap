@@ -10,6 +10,7 @@ use File::Temp;
 use File::Copy;
 use IO::Compress::Gzip qw/gzip $GzipError/;
 use Encode;
+use Carp;
 
 use Web::Sitemap::Url;
 
@@ -63,20 +64,20 @@ sub new {
 			$self->{namespace} = [ $self->{namespace} ];
 		}
 		elsif (ref $self->{namespace} ne 'ARRAY') {
-			die 'namespace must be scalar or array ref!';
+			croak 'namespace must be scalar or array ref!';
 		}
 	}
 
 	unless ($self->{output_dir}) {
-		die 'output_dir expected!';
+		croak 'output_dir expected!';
 	}
 
 	if ($self->{temp_dir} and not -w $self->{temp_dir}) {
-		die sprintf "Can't write to temp_dir '%s' (error: %s)", $self->{temp_dir}, $!;
+		croak sprintf "Can't write to temp_dir '%s' (error: %s)", $self->{temp_dir}, $!;
 	}
 
 	if ($self->{move_from_temp_action} and ref $self->{move_from_temp_action} ne 'CODE') {
-		die 'move_from_temp_action must be code ref!';
+		croak 'move_from_temp_action must be code ref!';
 	}
 
 	return bless $self, $class;
@@ -88,7 +89,7 @@ sub add {
 	my $tag = $p{tag} || $self->{tag};
 
 	if (ref $url_list ne 'ARRAY') {
-		die __PACKAGE__.'::add($url_list): $url_list must be array ref';
+		croak __PACKAGE__.'::add($url_list): $url_list must be array ref';
 	}
 
 	for my $url (@$url_list) {
@@ -111,7 +112,7 @@ sub finish {
 	return unless keys %{$self->{tags}};
 
 	my $index_temp_file_name = $self->_temp_file->filename;
-	open INDEX_FILE, '>' . $index_temp_file_name or die "Can't open file '$index_temp_file_name'! $!\n";
+	open INDEX_FILE, '>' . $index_temp_file_name or croak "Can't open file '$index_temp_file_name'! $!\n";
 
 	print  INDEX_FILE XML_HEAD;
 	printf INDEX_FILE "\n<sitemapindex %s>", XML_MAIN_NAMESPACE;
@@ -142,7 +143,7 @@ sub _move_from_temp {
 	}
 	else {
 		File::Copy::move($temp_file_name, $public_file_name)
-			or die sprintf 'move %s -> %s error: %s', $temp_file_name, $public_file_name, $!;
+			or croak sprintf 'move %s -> %s error: %s', $temp_file_name, $public_file_name, $!;
 	}
 }
 
@@ -186,7 +187,7 @@ sub _set_new_file {
 	$self->{tags}->{$tag}->{url_count} = 0;
 	$self->{tags}->{$tag}->{file_size} = 0;
 	$self->{tags}->{$tag}->{file} = IO::Compress::Gzip->new($temp_file->filename)
-		or die "gzip failed: $GzipError\n";
+		or croak "gzip failed: $GzipError\n";
 	$self->{tags}->{$tag}->{file}->autoflush;
 	$self->{tags}->{$tag}->{temp_file} = $temp_file;
 

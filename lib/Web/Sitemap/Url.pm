@@ -6,6 +6,7 @@ use strict;
 use warnings;
 use utf8;
 
+use Carp;
 
 sub new {
 	my ($class, $data, %p) = @_;
@@ -20,12 +21,12 @@ sub new {
 	}
 	elsif (ref $data eq 'HASH') {
 		unless (defined $data->{loc}) {
-			die __PACKAGE__.'->new($data): not defined $data->{loc}';
+			croak __PACKAGE__.'->new($data): not defined $data->{loc}';
 		}
 		$self = { %$self, %$data };
 	}
 	else {
-		die __PACKAGE__. '->new($data): $data must be scalar or hash ref';
+		croak __PACKAGE__. '->new($data): $data must be scalar or hash ref';
 	}
 
 	return bless $self, $class;
