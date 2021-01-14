@@ -162,7 +162,7 @@ sub _file_limit_near {
 	return (
 		$self->{tags}->{$tag}->{url_count} >= $self->{url_limit}
 		||
-		($self->{tags}->{$tag}->{file_size} + $new_portion_size) >= ($self->{file_size_limit} - 200) # 200 - на закрывающие теги в конце файла (с запасом)
+		($self->{tags}->{$tag}->{file_size} + $new_portion_size) >= ($self->{file_size_limit} - 200) # 200 bytes for the closing tags at the end of the file
 	);
 }
 
@@ -189,10 +189,10 @@ sub _set_new_file {
 		or die "gzip failed: $GzipError\n";
 	$self->{tags}->{$tag}->{file}->autoflush;
 	$self->{tags}->{$tag}->{temp_file} = $temp_file;
-	#
-	# Не проверяем тут файл на превышение размера, потому что файл пустой,
-	# и врядли начальные теги превысят хотябы 1Мб
-	#
+
+	# Do not check the file for oversize because it is empty and will likely
+	# not exceed 1MB with initial tags alone
+
 	$self->_append(
 		$tag,
 		sprintf(
