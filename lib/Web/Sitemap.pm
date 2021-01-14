@@ -2,80 +2,6 @@ package Web::Sitemap;
 
 our $VERSION = '0.902';
 
-=head1 NAME
-
- Web::Sitemap - Simple way to generate sitemap files with paging support
-
-=cut
-
-=head1 SYNOPSIS
-
- Each instance of the class Web::Sitemap is manage of one index file.
- Now it always use Gzip compress.
-
-
- use Web::Sitemap;
-
- my $sm = Web::Sitemap->new(
-	output_dir => '/path/for/sitemap',
-
-	### Options ###
-
-	temp_dir    => '/path/to/tmp',
-	loc_prefix  => 'http://my_doamin.com',
-	index_name  => 'sitemap',
-	file_prefix => 'sitemap.',
-
-	# mark for grouping urls
-	default_tag => 'my_tag',
-
-
-	# add <mobile:mobile/> inside <url>, and appropriate namespace (Google standard)
-	mobile      => 1,
-
-	# add appropriate namespace (Google standard)
-	images      => 1,
-
-	# additional namespaces (scalar or array ref) for <urlset>
-	namespace   => 'xmlns:some_namespace_name="..."',
-
-	# location prefix for files-parts of the sitemap (default is loc_prefix value)
-	file_loc_prefix  => 'http://my_doamin.com',
-
-	# specify data input charset
-	charset => 'utf8',
-
-	move_from_temp_action => sub {
-		my ($temp_file_name, $public_file_name) = @_;
-
-		# ...some action...
-		#
-		# default behavior is
-		# File::Copy::move($temp_file_name, $public_file_name);
-	}
-
- );
-
- $sm->add(\@url_list);
-
-
- # When adding a new portion of URL, you can specify a label for the file in which these will be URL
-
- $sm->add(\@url_list1, tag => 'articles');
- $sm->add(\@url_list2, tag => 'users');
-
-
- # If in the process of filling the file number of URL's will exceed the limit of 50 000 URL or the file size is larger than 10MB, the file will be rotate
-
- $sm->add(\@url_list3, tag => 'articles');
-
-
- # After calling finish() method will create an index file, which will link to files with URL's
-
- $sm->finish;
-
-=cut
-
 use strict;
 use warnings;
 use bytes;
@@ -338,6 +264,77 @@ sub _file_name {
 
 1;
 
+__END__
+
+=head1 NAME
+
+ Web::Sitemap - Simple way to generate sitemap files with paging support
+
+=head1 SYNOPSIS
+
+ Each instance of the class Web::Sitemap is manage of one index file.
+ Now it always use Gzip compress.
+
+
+ use Web::Sitemap;
+
+ my $sm = Web::Sitemap->new(
+	output_dir => '/path/for/sitemap',
+
+	### Options ###
+
+	temp_dir    => '/path/to/tmp',
+	loc_prefix  => 'http://my_doamin.com',
+	index_name  => 'sitemap',
+	file_prefix => 'sitemap.',
+
+	# mark for grouping urls
+	default_tag => 'my_tag',
+
+
+	# add <mobile:mobile/> inside <url>, and appropriate namespace (Google standard)
+	mobile      => 1,
+
+	# add appropriate namespace (Google standard)
+	images      => 1,
+
+	# additional namespaces (scalar or array ref) for <urlset>
+	namespace   => 'xmlns:some_namespace_name="..."',
+
+	# location prefix for files-parts of the sitemap (default is loc_prefix value)
+	file_loc_prefix  => 'http://my_doamin.com',
+
+	# specify data input charset
+	charset => 'utf8',
+
+	move_from_temp_action => sub {
+		my ($temp_file_name, $public_file_name) = @_;
+
+		# ...some action...
+		#
+		# default behavior is
+		# File::Copy::move($temp_file_name, $public_file_name);
+	}
+
+ );
+
+ $sm->add(\@url_list);
+
+
+ # When adding a new portion of URL, you can specify a label for the file in which these will be URL
+
+ $sm->add(\@url_list1, tag => 'articles');
+ $sm->add(\@url_list2, tag => 'users');
+
+
+ # If in the process of filling the file number of URL's will exceed the limit of 50 000 URL or the file size is larger than 10MB, the file will be rotate
+
+ $sm->add(\@url_list3, tag => 'articles');
+
+
+ # After calling finish() method will create an index file, which will link to files with URL's
+
+ $sm->finish;
 
 =head1 DESCRIPTION
 
@@ -430,8 +427,6 @@ Also support for Google images format:
 		</image:image>
 	</url>
 	</urlset>
-
-=cut
 
 =head1 AUTHOR
 
