@@ -117,7 +117,8 @@ sub finish {
 	print  INDEX_FILE XML_HEAD;
 	printf INDEX_FILE "\n<sitemapindex %s>", XML_MAIN_NAMESPACE;
 
-	while (my ($tag, $data) = each %{$self->{tags}}) {
+	for my $tag (sort keys %{$self->{tags}}) {
+		my $data = $self->{tags}{$tag};
 		$self->_close_file($tag);
 		for my $page (1 .. $data->{page}) {
 			printf INDEX_FILE "\n<sitemap><loc>%s/%s</loc></sitemap>", $self->{file_loc_prefix}, $self->_file_name($tag, $page);
