@@ -15,7 +15,7 @@ use Web::Sitemap::Url;
 
 use constant {
 	URL_LIMIT           => 50000,
-	FILE_SIZE_LIMIT     => 10 * 1024 * 1024,
+	FILE_SIZE_LIMIT     => 50 * 1024 * 1024,
 	FILE_SIZE_LIMIT_MIN => 1024 * 1024,
 
 	DEFAULT_FILE_PREFIX => 'sitemap.',
