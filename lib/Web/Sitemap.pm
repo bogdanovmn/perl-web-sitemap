@@ -34,38 +34,47 @@ use constant {
 sub new {
 	my ($class, %p) = @_;
 
-	my $self = {
-		output_dir      => $p{output_dir},
-		temp_dir        => $p{temp_dir},
+	my %allowed_keys = map { $_ => 1 } qw(
+		output_dir      temp_dir              loc_prefix
+		url_limit       file_size_limit       file_prefix
+		file_loc_prefix default_tag           index_name
+		mobile          images                namespace
+		charset         move_from_temp_action
+	);
 
-		loc_prefix      => $p{loc_prefix} || '',
+	my @bad_keys = grep { !exists $allowed_keys{$_} } keys %p;
+	croak "Unknown parameters: @bad_keys" if @bad_keys;
+
+	my $self = {
+		loc_prefix      => '',
 		tags            => {},
 
-		url_limit       => $p{url_limit}       || URL_LIMIT,
-		file_size_limit => $p{file_size_limit} || FILE_SIZE_LIMIT,
-		file_prefix     => $p{file_prefix}     || DEFAULT_FILE_PREFIX,
-		file_loc_prefix => $p{file_loc_prefix} || $p{loc_prefix} || '',
-		default_tag     => $p{default_tag}     || DEFAULT_TAG,
-		index_name      => $p{index_name}      || DEFAULT_INDEX_NAME,
-		mobile          => $p{mobile}          || 0,
-		images          => $p{images}          || 0,
-		namespace       => $p{namespace},
-		charset         => $p{charset}         || 'utf8',
+		url_limit       => URL_LIMIT,
+		file_size_limit => FILE_SIZE_LIMIT,
+		file_prefix     => DEFAULT_FILE_PREFIX,
+		file_loc_prefix => '',
+		default_tag     => DEFAULT_TAG,
+		index_name      => DEFAULT_INDEX_NAME,
+		mobile          => 0,
+		images          => 0,
+		charset         => 'utf8',
 
-		move_from_temp_action => $p{move_from_temp_action}
+		%p, # actual input values
 	};
+
+	$self->{file_loc_prefix} ||= $self->{loc_prefix};
 
 	if ($self->{file_size_limit} < FILE_SIZE_LIMIT_MIN) {
 		$self->{file_size_limit} = FILE_SIZE_LIMIT_MIN;
 	}
 
 	if ($self->{namespace}) {
-		if (ref $self->{namespace} eq '') {
-			$self->{namespace} = [ $self->{namespace} ];
-		}
-		elsif (ref $self->{namespace} ne 'ARRAY') {
-			croak 'namespace must be scalar or array ref!';
-		}
+
+		$self->{namespace} = [ $self->{namespace} ]
+			if !ref $self->{namespace};
+
+		croak 'namespace must be scalar or array ref!'
+			if ref $self->{namespace} ne 'ARRAY';
 	}
 
 	unless ($self->{output_dir}) {
@@ -89,11 +98,12 @@ sub add {
 	my $tag = $p{tag} || $self->{tag};
 
 	if (ref $url_list ne 'ARRAY') {
-		croak __PACKAGE__.'::add($url_list): $url_list must be array ref';
+		croak 'The list of sitemap URLs must be array ref';
 	}
 
 	for my $url (@$url_list) {
-		my $data = (__PACKAGE__. '::Url')->new(	$url,
+		my $data = Web::Sitemap::Url->new(
+			$url,
 			mobile     => $self->{mobile},
 			loc_prefix => $self->{loc_prefix},
 		)->to_xml_string;
@@ -112,21 +122,22 @@ sub finish {
 	return unless keys %{$self->{tags}};
 
 	my $index_temp_file_name = $self->_temp_file->filename;
-	open INDEX_FILE, '>' . $index_temp_file_name or croak "Can't open file '$index_temp_file_name'! $!\n";
+	open my $index_file, '>' . $index_temp_file_name or croak "Can't open file '$index_temp_file_name'! $!\n";
 
-	print  INDEX_FILE XML_HEAD;
-	printf INDEX_FILE "\n<sitemapindex %s>", XML_MAIN_NAMESPACE;
+	print  {$index_file} XML_HEAD;
+	printf {$index_file} "\n<sitemapindex %s>", XML_MAIN_NAMESPACE;
 
 	for my $tag (sort keys %{$self->{tags}}) {
 		my $data = $self->{tags}{$tag};
+
 		$self->_close_file($tag);
 		for my $page (1 .. $data->{page}) {
-			printf INDEX_FILE "\n<sitemap><loc>%s/%s</loc></sitemap>", $self->{file_loc_prefix}, $self->_file_name($tag, $page);
+			printf {$index_file} "\n<sitemap><loc>%s/%s</loc></sitemap>", $self->{file_loc_prefix}, $self->_file_name($tag, $page);
 		}
 	}
 
-	print INDEX_FILE "\n</sitemapindex>";
-	close INDEX_FILE;
+	print {$index_file} "\n</sitemapindex>";
+	close $index_file;
 
 	$self->_move_from_temp(
 		$index_temp_file_name,
@@ -151,20 +162,21 @@ sub _move_from_temp {
 sub _file_limit_near {
 	my ($self, $tag, $new_portion_size) = @_;
 
-	return 0 unless defined $self->{tags}->{$tag};
+	return 0 unless defined $self->{tags}{$tag};
 
-	#printf("tag: %s.%d; url: %d; gzip_size: %d (%d)\n",
-	#	$tag,
-	#	$self->{tags}->{$tag}->{page},
-	#	$self->{tags}->{$tag}->{url_count},
-	#	$self->{tags}->{$tag}->{file_size},
-	#	$self->{file_size_limit}
-	#);
+	# printf("tag: %s.%d; url: %d; gzip_size: %d (%d)\n",
+	# 	$tag,
+	# 	$self->{tags}->{$tag}->{page},
+	# 	$self->{tags}->{$tag}->{url_count},
+	# 	$self->{tags}->{$tag}->{file_size},
+	# 	$self->{file_size_limit}
+	# );
 
 	return (
-		$self->{tags}->{$tag}->{url_count} >= $self->{url_limit}
+		$self->{tags}{$tag}{url_count} >= $self->{url_limit}
 		||
-		($self->{tags}->{$tag}->{file_size} + $new_portion_size) >= ($self->{file_size_limit} - 200) # 200 bytes for the closing tags at the end of the file
+		# 200 bytes should be well enough for the closing tags at the end of the file
+		($self->{tags}{$tag}{file_size} + $new_portion_size) >= ($self->{file_size_limit} - 200)
 	);
 }
 
@@ -173,9 +185,7 @@ sub _temp_file {
 
 	return File::Temp->new(
 		UNLINK => 1,
-		$self->{temp_dir}
-			? ( DIR => $self->{temp_dir} )
-			: ()
+		$self->{temp_dir} ? ( DIR => $self->{temp_dir} ) : ()
 	);
 }
 
@@ -184,60 +194,53 @@ sub _set_new_file {
 
 	my $temp_file = $self->_temp_file;
 
-	$self->{tags}->{$tag}->{page}++;
-	$self->{tags}->{$tag}->{url_count} = 0;
-	$self->{tags}->{$tag}->{file_size} = 0;
-	$self->{tags}->{$tag}->{file} = IO::Compress::Gzip->new($temp_file->filename)
+	$self->{tags}{$tag}{page}++;
+	$self->{tags}{$tag}{url_count} = 0;
+	$self->{tags}{$tag}{file_size} = 0;
+	$self->{tags}{$tag}{file} = IO::Compress::Gzip->new($temp_file->filename)
 		or croak "gzip failed: $GzipError\n";
-	$self->{tags}->{$tag}->{file}->autoflush;
-	$self->{tags}->{$tag}->{temp_file} = $temp_file;
+	$self->{tags}{$tag}{file}->autoflush;
+	$self->{tags}{$tag}{temp_file} = $temp_file;
 
 	# Do not check the file for oversize because it is empty and will likely
 	# not exceed 1MB with initial tags alone
 
+	my @namespaces = (XML_MAIN_NAMESPACE);
+	push @namespaces, XML_MOBILE_NAMESPACE
+		if $self->{mobile};
+	push @namespaces, XML_IMAGES_NAMESPACE
+		if $self->{images};
+	push @namespaces, @{$self->{namespace}}
+		if $self->{namespace};
+
 	$self->_append(
 		$tag,
-		sprintf(
-			"%s\n<urlset %s>",
-				XML_HEAD,
-				join(' ',
-					XML_MAIN_NAMESPACE,
-					$self->{mobile}
-						? XML_MOBILE_NAMESPACE
-						: (),
-					$self->{images}
-						? XML_IMAGES_NAMESPACE
-						: (),
-					$self->{namespace}
-						? @{$self->{namespace}}
-						: ()
-				)
-		)
+		sprintf("%s\n<urlset %s>", XML_HEAD, join(' ', @namespaces))
 	);
 }
 
 sub _file_handle {
 	my ($self, $tag) = @_;
 
-	unless (exists $self->{tags}->{$tag}) {
+	unless (exists $self->{tags}{$tag}) {
 		$self->_set_new_file($tag);
 	}
 
-	return $self->{tags}->{$tag}->{file};
+	return $self->{tags}{$tag}{file};
 }
 
 sub _append {
 	my ($self, $tag, $data) = @_;
 
 	$self->_file_handle($tag)->print(Encode::encode($self->{charset}, $data));
-	$self->{tags}->{$tag}->{file_size} += bytes::length $data;
+	$self->{tags}{$tag}{file_size} += bytes::length $data;
 }
 
 sub _append_url {
 	my ($self, $tag, $data) = @_;
 
 	$self->_append($tag, $data);
-	$self->{tags}->{$tag}->{url_count}++;
+	$self->{tags}{$tag}{url_count}++;
 }
 
 sub _next_file {
@@ -254,14 +257,20 @@ sub _close_file {
 	$self->_file_handle($tag)->close;
 
 	$self->_move_from_temp(
-		$self->{tags}->{$tag}->{temp_file}->filename,
+		$self->{tags}{$tag}{temp_file}->filename,
 		$self->{output_dir}. '/'. $self->_file_name($tag)
 	);
 }
 
 sub _file_name {
 	my ($self, $tag, $page) = @_;
-	return $self->{file_prefix}. $tag. '.'. ($page || $self->{tags}->{$tag}->{page}). '.xml.gz';
+	return
+		$self->{file_prefix}
+		. $tag
+		. '.'
+		. ($page || $self->{tags}{$tag}{page})
+		. '.xml.gz'
+	;
 }
 
 1;

@@ -11,9 +11,17 @@ use Carp;
 sub new {
 	my ($class, $data, %p) = @_;
 
+	my %allowed_keys = map { $_ => 1 } qw(
+		mobile loc_prefix
+	);
+
+	my @bad_keys = grep { !exists $allowed_keys{$_} } keys %p;
+	croak "Unknown parameters: @bad_keys" if @bad_keys;
+
 	my $self = {
-		mobile     => $p{mobile} || 0,
-		loc_prefix => $p{loc_prefix} || ''
+		mobile     => 0,
+		loc_prefix => '',
+		%p, # actual input values
 	};
 
 	if (not ref $data) {
@@ -21,12 +29,12 @@ sub new {
 	}
 	elsif (ref $data eq 'HASH') {
 		unless (defined $data->{loc}) {
-			croak __PACKAGE__.'->new($data): not defined $data->{loc}';
+			croak 'Web::Sitemap::Url first argument hash must have `loc` key defined';
 		}
 		$self = { %$self, %$data };
 	}
 	else {
-		croak __PACKAGE__. '->new($data): $data must be scalar or hash ref';
+		croak 'Web::Sitemap::Url first argument must be a plain scalar or a hash reference';
 	}
 
 	return bless $self, $class;
@@ -52,24 +60,25 @@ sub _images_xml_string {
 
 	if (defined $self->{images}) {
 		my $i = 1;
-		for my $image (@{$self->{images}->{loc_list}}) {
+		for my $image (@{$self->{images}{loc_list}}) {
 			my $loc = ref $image eq 'HASH' ? $image->{loc} : $image;
 
 			my $caption = '';
 			if (ref $image eq 'HASH' and defined $image->{caption}) {
 				$caption = $image->{caption};
 			}
-			elsif (defined $self->{images}->{caption_format_simple}) {
-				$caption = $self->{images}->{caption_format_simple}. " $i";
+			elsif (defined $self->{images}{caption_format_simple}) {
+				$caption = $self->{images}{caption_format_simple}. " $i";
 			}
-			elsif (defined $self->{images}->{caption_format}) {
-				$caption = &{$self->{images}->{caption_format}}($i);
+			elsif (defined $self->{images}{caption_format}) {
+				$caption = &{$self->{images}{caption_format}}($i);
 			}
 
 			$result .= sprintf(
 				"\n<image:image><loc>%s</loc><caption><![CDATA[%s]]></caption></image:image>",
 				$loc, $caption
 			);
+
 			$i++;
 		}
 	}
