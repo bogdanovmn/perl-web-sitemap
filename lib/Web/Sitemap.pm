@@ -20,7 +20,7 @@ use constant {
 	FILE_SIZE_LIMIT_MIN => 1024 * 1024,
 
 	DEFAULT_FILE_PREFIX => 'sitemap.',
-	DEFAULT_TAG         => 'tag',
+	DEFAULT_TAG         => 'pages',
 	DEFAULT_INDEX_NAME  => 'sitemap',
 
 	XML_HEAD             => '<?xml version="1.0" encoding="UTF-8"?>',
