@@ -12,6 +12,11 @@ WriteMakefile(
 	AUTHOR           => 'Mikhail N Bogdanov (bogdanovmn@gmail.com)',
 	LICENSE          => 'perl',
 	ABSTRACT_FROM    => 'lib/Web/Sitemap.pm',
+
+	TEST_REQUIRES    => {
+		'IO::Uncompress::Gunzip' => 0,
+	},
+
 	PREREQ_PM        => {
 		'IO::Compress::Gzip' => 0,
 	},
