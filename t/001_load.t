@@ -1,9 +1,8 @@
-# -*- perl -*-
-
-# t/001_load.t - check module loading and create testing directory
-
-use Test::More tests => 1;
+use strict;
+use warnings;
+use Test::More;
 
 BEGIN { use_ok( 'Web::Sitemap' ); }
 
+done_testing;
 
