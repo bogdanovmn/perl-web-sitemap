@@ -9,7 +9,7 @@ use utf8;
 
 sub new {
 	my ($class, $data, %p) = @_;
-	
+
 	my $self = {
 		mobile     => $p{mobile} || 0,
 		loc_prefix => $p{loc_prefix} || ''
@@ -35,9 +35,9 @@ sub to_xml_string {
 	my ($self, %p) = @_;
 
 	return sprintf(
-		"\n<url><loc>%s%s</loc>%s%s%s</url>", 
-			$self->{loc_prefix}, 
-			$self->{loc}, 
+		"\n<url><loc>%s%s</loc>%s%s%s</url>",
+			$self->{loc_prefix},
+			$self->{loc},
 			$self->{changefreq} ? sprintf('<changefreq>%s</changefreq>', $self->{changefreq}) : '',
 			$self->{mobile}     ? '<mobile:mobile/>' : '',
 			$self->_images_xml_string
@@ -46,14 +46,14 @@ sub to_xml_string {
 
 sub _images_xml_string {
 	my ($self) = @_;
-	
+
 	my $result = '';
 
 	if (defined $self->{images}) {
 		my $i = 1;
 		for my $image (@{$self->{images}->{loc_list}}) {
 			my $loc = ref $image eq 'HASH' ? $image->{loc} : $image;
-			
+
 			my $caption = '';
 			if (ref $image eq 'HASH' and defined $image->{caption}) {
 				$caption = $image->{caption};

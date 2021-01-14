@@ -268,17 +268,16 @@ __END__
 
 =head1 NAME
 
- Web::Sitemap - Simple way to generate sitemap files with paging support
+Web::Sitemap - Simple way to generate sitemap files with paging support
 
 =head1 SYNOPSIS
 
- Each instance of the class Web::Sitemap is manage of one index file.
- Now it always use Gzip compress.
+Each instance of the class Web::Sitemap is manage of one index file.
+Now it always use Gzip compress.
 
+	use Web::Sitemap;
 
- use Web::Sitemap;
-
- my $sm = Web::Sitemap->new(
+	my $sm = Web::Sitemap->new(
 	output_dir => '/path/for/sitemap',
 
 	### Options ###
@@ -316,25 +315,25 @@ __END__
 		# File::Copy::move($temp_file_name, $public_file_name);
 	}
 
- );
+	);
 
- $sm->add(\@url_list);
-
-
- # When adding a new portion of URL, you can specify a label for the file in which these will be URL
-
- $sm->add(\@url_list1, tag => 'articles');
- $sm->add(\@url_list2, tag => 'users');
+	$sm->add(\@url_list);
 
 
- # If in the process of filling the file number of URL's will exceed the limit of 50 000 URL or the file size is larger than 10MB, the file will be rotate
+	# When adding a new portion of URL, you can specify a label for the file in which these will be URL
 
- $sm->add(\@url_list3, tag => 'articles');
+	$sm->add(\@url_list1, tag => 'articles');
+	$sm->add(\@url_list2, tag => 'users');
 
 
- # After calling finish() method will create an index file, which will link to files with URL's
+	# If in the process of filling the file number of URL's will exceed the limit of 50 000 URL or the file size is larger than 10MB, the file will be rotate
 
- $sm->finish;
+	$sm->add(\@url_list3, tag => 'articles');
+
+
+	# After calling finish() method will create an index file, which will link to files with URL's
+
+	$sm->finish;
 
 =head1 DESCRIPTION
 
