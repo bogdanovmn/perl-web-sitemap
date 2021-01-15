@@ -1,6 +1,6 @@
 package Web::Sitemap;
 
-our $VERSION = '0.902';
+our $VERSION = '0.903';
 
 use strict;
 use warnings;
