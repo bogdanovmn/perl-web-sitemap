@@ -22,17 +22,10 @@ WriteMakefile(
 	},
 
 	META_MERGE => {
-		'meta-spec' => {
-			'version' => 2,
-		},
 		resources   => {
 			license    => 'https://dev.perl.org/licenses',
-			repository => {
-				'type' => 'git',
-				'url'  => 'https://github.com/bogdanovmn/perl-web-sitemap.git',
-				'web'  => 'https://github.com/bogdanovmn/perl-web-sitemap',
-			},
 			bugtracker => 'https://github.com/bogdanovmn/perl-web-sitemap/issues',
+			repository => 'https://github.com/bogdanovmn/perl-web-sitemap',
 		},
 	},
 
