@@ -3,7 +3,7 @@ use warnings;
 use utf8;
 use lib 't/lib';
 
-use Test::More;
+use Test::More tests => 16;
 use Web::Sitemap;
 use File::Basename;
 use SitemapTesters;
@@ -135,5 +135,3 @@ my $g = Web::Sitemap->new(
 $g->add(\@urls, tag => 'test_tag');
 $g->add(\@img_urls, tag => 'with_images');
 $g->finish;
-
-done_testing 16;

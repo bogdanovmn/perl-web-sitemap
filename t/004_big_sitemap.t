@@ -3,7 +3,7 @@ use warnings;
 use utf8;
 use lib 't/lib';
 
-use Test::More;
+use Test::More tests => 6;
 use Web::Sitemap;
 use File::Basename;
 use SitemapTesters;
@@ -61,5 +61,3 @@ my $g = Web::Sitemap->new(
 # urls got autovivifies with undefs, so we have to grep
 $g->add([grep { defined } @urls]);
 $g->finish;
-
-done_testing 6;
