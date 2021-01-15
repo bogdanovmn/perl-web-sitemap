@@ -15,23 +15,23 @@ use Carp;
 use Web::Sitemap::Url;
 
 use constant {
-	URL_LIMIT           => 50000,
-	FILE_SIZE_LIMIT     => 50 * 1024 * 1024,
+	URL_LIMIT => 50000,
+	FILE_SIZE_LIMIT => 50 * 1024 * 1024,
 	FILE_SIZE_LIMIT_MIN => 1024 * 1024,
 
 	DEFAULT_FILE_PREFIX => 'sitemap.',
-	DEFAULT_TAG         => 'pages',
-	DEFAULT_INDEX_NAME  => 'sitemap',
+	DEFAULT_TAG => 'pages',
+	DEFAULT_INDEX_NAME => 'sitemap',
 
-	XML_HEAD             => '<?xml version="1.0" encoding="UTF-8"?>',
-	XML_MAIN_NAMESPACE   => 'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"',
+	XML_HEAD => '<?xml version="1.0" encoding="UTF-8"?>',
+	XML_MAIN_NAMESPACE => 'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"',
 	XML_MOBILE_NAMESPACE => 'xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0"',
 	XML_IMAGES_NAMESPACE => 'xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"'
 
 };
 
-
-sub new {
+sub new
+{
 	my ($class, %p) = @_;
 
 	my %allowed_keys = map { $_ => 1 } qw(
@@ -46,20 +46,20 @@ sub new {
 	croak "Unknown parameters: @bad_keys" if @bad_keys;
 
 	my $self = {
-		loc_prefix      => '',
-		tags            => {},
+		loc_prefix => '',
+		tags => {},
 
-		url_limit       => URL_LIMIT,
+		url_limit => URL_LIMIT,
 		file_size_limit => FILE_SIZE_LIMIT,
-		file_prefix     => DEFAULT_FILE_PREFIX,
+		file_prefix => DEFAULT_FILE_PREFIX,
 		file_loc_prefix => '',
-		default_tag     => DEFAULT_TAG,
-		index_name      => DEFAULT_INDEX_NAME,
-		mobile          => 0,
-		images          => 0,
-		charset         => 'utf8',
+		default_tag => DEFAULT_TAG,
+		index_name => DEFAULT_INDEX_NAME,
+		mobile => 0,
+		images => 0,
+		charset => 'utf8',
 
-		%p, # actual input values
+		%p,    # actual input values
 	};
 
 	$self->{file_loc_prefix} ||= $self->{loc_prefix};
@@ -70,7 +70,7 @@ sub new {
 
 	if ($self->{namespace}) {
 
-		$self->{namespace} = [ $self->{namespace} ]
+		$self->{namespace} = [$self->{namespace}]
 			if !ref $self->{namespace};
 
 		croak 'namespace must be scalar or array ref!'
@@ -92,7 +92,8 @@ sub new {
 	return bless $self, $class;
 }
 
-sub add {
+sub add
+{
 	my ($self, $url_list, %p) = @_;
 
 	my $tag = $p{tag} || $self->{default_tag};
@@ -104,7 +105,7 @@ sub add {
 	for my $url (@$url_list) {
 		my $data = Web::Sitemap::Url->new(
 			$url,
-			mobile     => $self->{mobile},
+			mobile => $self->{mobile},
 			loc_prefix => $self->{loc_prefix},
 		)->to_xml_string;
 
@@ -116,7 +117,8 @@ sub add {
 	}
 }
 
-sub finish {
+sub finish
+{
 	my ($self, %p) = @_;
 
 	return unless keys %{$self->{tags}};
@@ -124,7 +126,7 @@ sub finish {
 	my $index_temp_file_name = $self->_temp_file->filename;
 	open my $index_file, '>' . $index_temp_file_name or croak "Can't open file '$index_temp_file_name'! $!\n";
 
-	print  {$index_file} XML_HEAD;
+	print {$index_file} XML_HEAD;
 	printf {$index_file} "\n<sitemapindex %s>", XML_MAIN_NAMESPACE;
 
 	for my $tag (sort keys %{$self->{tags}}) {
@@ -132,7 +134,8 @@ sub finish {
 
 		$self->_close_file($tag);
 		for my $page (1 .. $data->{page}) {
-			printf {$index_file} "\n<sitemap><loc>%s/%s</loc></sitemap>", $self->{file_loc_prefix}, $self->_file_name($tag, $page);
+			printf {$index_file} "\n<sitemap><loc>%s/%s</loc></sitemap>", $self->{file_loc_prefix},
+				$self->_file_name($tag, $page);
 		}
 	}
 
@@ -141,11 +144,12 @@ sub finish {
 
 	$self->_move_from_temp(
 		$index_temp_file_name,
-		$self->{output_dir}. '/'. $self->{index_name}. '.xml'
+		$self->{output_dir} . '/' . $self->{index_name} . '.xml'
 	);
 }
 
-sub _move_from_temp {
+sub _move_from_temp
+{
 	my ($self, $temp_file_name, $public_file_name) = @_;
 
 	#printf "move %s -> %s\n", $temp_file_name, $public_file_name;
@@ -159,7 +163,8 @@ sub _move_from_temp {
 	}
 }
 
-sub _file_limit_near {
+sub _file_limit_near
+{
 	my ($self, $tag, $new_portion_size) = @_;
 
 	return 0 unless defined $self->{tags}{$tag};
@@ -174,22 +179,25 @@ sub _file_limit_near {
 
 	return (
 		$self->{tags}{$tag}{url_count} >= $self->{url_limit}
-		||
-		# 200 bytes should be well enough for the closing tags at the end of the file
-		($self->{tags}{$tag}{file_size} + $new_portion_size) >= ($self->{file_size_limit} - 200)
+			||
+
+			# 200 bytes should be well enough for the closing tags at the end of the file
+			($self->{tags}{$tag}{file_size} + $new_portion_size) >= ($self->{file_size_limit} - 200)
 	);
 }
 
-sub _temp_file {
+sub _temp_file
+{
 	my ($self) = @_;
 
 	return File::Temp->new(
 		UNLINK => 1,
-		$self->{temp_dir} ? ( DIR => $self->{temp_dir} ) : ()
+		$self->{temp_dir} ? (DIR => $self->{temp_dir}) : ()
 	);
 }
 
-sub _set_new_file {
+sub _set_new_file
+{
 	my ($self, $tag) = @_;
 
 	my $temp_file = $self->_temp_file;
@@ -219,7 +227,8 @@ sub _set_new_file {
 	);
 }
 
-sub _file_handle {
+sub _file_handle
+{
 	my ($self, $tag) = @_;
 
 	unless (exists $self->{tags}{$tag}) {
@@ -229,28 +238,32 @@ sub _file_handle {
 	return $self->{tags}{$tag}{file};
 }
 
-sub _append {
+sub _append
+{
 	my ($self, $tag, $data) = @_;
 
 	$self->_file_handle($tag)->print(Encode::encode($self->{charset}, $data));
 	$self->{tags}{$tag}{file_size} += bytes::length $data;
 }
 
-sub _append_url {
+sub _append_url
+{
 	my ($self, $tag, $data) = @_;
 
 	$self->_append($tag, $data);
 	$self->{tags}{$tag}{url_count}++;
 }
 
-sub _next_file {
+sub _next_file
+{
 	my ($self, $tag) = @_;
 
 	$self->_close_file($tag);
 	$self->_set_new_file($tag);
 }
 
-sub _close_file {
+sub _close_file
+{
 	my ($self, $tag) = @_;
 
 	$self->_append($tag, "\n</urlset>");
@@ -258,11 +271,12 @@ sub _close_file {
 
 	$self->_move_from_temp(
 		$self->{tags}{$tag}{temp_file}->filename,
-		$self->{output_dir}. '/'. $self->_file_name($tag)
+		$self->{output_dir} . '/' . $self->_file_name($tag)
 	);
 }
 
-sub _file_name {
+sub _file_name
+{
 	my ($self, $tag, $page) = @_;
 	return
 		$self->{file_prefix}
@@ -270,7 +284,7 @@ sub _file_name {
 		. '.'
 		. ($page || $self->{tags}{$tag}{page})
 		. '.xml.gz'
-	;
+		;
 }
 
 1;

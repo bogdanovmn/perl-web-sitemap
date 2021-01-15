@@ -89,7 +89,8 @@ my @img_urls = (
 	{
 		loc => 'http://test1.ru/',
 		images => {
-			caption_format => sub { my ($iterator_value) = @_; return sprintf('Вася - фото %d', $iterator_value); },
+			caption_format =>
+				sub { my ($iterator_value) = @_; return sprintf('Вася - фото %d', $iterator_value); },
 			loc_list => ['http://img1.ru/', 'http://img2.ru']
 		}
 	},
@@ -104,17 +105,17 @@ my @img_urls = (
 		loc => 'http://test122.ru/',
 		images => {
 			loc_list => [
-				{ loc => 'http://img122.ru/', caption => 'image #1' },
-				{ loc => 'http://img133.ru/', caption => 'image #2' },
-				{ loc => 'http://img144.ru/', caption => 'image #3' },
-				{ loc => 'http://img222.ru', caption => 'image #4' }
+				{loc => 'http://img122.ru/', caption => 'image #1'},
+				{loc => 'http://img133.ru/', caption => 'image #2'},
+				{loc => 'http://img144.ru/', caption => 'image #3'},
+				{loc => 'http://img222.ru', caption => 'image #4'}
 			]
 		}
 	}
 );
 
 my $g = Web::Sitemap->new(
-	output_dir => '..', # we don't care
+	output_dir => '..',    # we don't care
 	url_limit => 1,
 	file_size_limit => 200,
 	move_from_temp_action => sub {

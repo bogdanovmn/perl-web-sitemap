@@ -8,7 +8,8 @@ use utf8;
 
 use Carp;
 
-sub new {
+sub new
+{
 	my ($class, $data, %p) = @_;
 
 	my %allowed_keys = map { $_ => 1 } qw(
@@ -19,9 +20,9 @@ sub new {
 	croak "Unknown parameters: @bad_keys" if @bad_keys;
 
 	my $self = {
-		mobile     => 0,
+		mobile => 0,
 		loc_prefix => '',
-		%p, # actual input values
+		%p,    # actual input values
 	};
 
 	if (not ref $data) {
@@ -33,7 +34,7 @@ sub new {
 		unless (defined $data->{loc}) {
 			croak 'Web::Sitemap::Url first argument hash must have `loc` key defined';
 		}
-		$self = { %$self, %$data };
+		$self = {%$self, %$data};
 	}
 	else {
 		croak 'Web::Sitemap::Url first argument must be a string or a hash reference';
@@ -42,20 +43,22 @@ sub new {
 	return bless $self, $class;
 }
 
-sub to_xml_string {
+sub to_xml_string
+{
 	my ($self, %p) = @_;
 
 	return sprintf(
 		"\n<url><loc>%s%s</loc>%s%s%s</url>",
-			$self->{loc_prefix},
-			$self->{loc},
-			$self->{changefreq} ? sprintf('<changefreq>%s</changefreq>', $self->{changefreq}) : '',
-			$self->{mobile}     ? '<mobile:mobile/>' : '',
-			$self->_images_xml_string
+		$self->{loc_prefix},
+		$self->{loc},
+		$self->{changefreq} ? sprintf('<changefreq>%s</changefreq>', $self->{changefreq}) : '',
+		$self->{mobile} ? '<mobile:mobile/>' : '',
+		$self->_images_xml_string
 	);
 }
 
-sub _images_xml_string {
+sub _images_xml_string
+{
 	my ($self) = @_;
 
 	my $result = '';
@@ -70,7 +73,7 @@ sub _images_xml_string {
 				$caption = $image->{caption};
 			}
 			elsif (defined $self->{images}{caption_format_simple}) {
-				$caption = $self->{images}{caption_format_simple}. " $i";
+				$caption = $self->{images}{caption_format_simple} . " $i";
 			}
 			elsif (defined $self->{images}{caption_format}) {
 				$caption = &{$self->{images}{caption_format}}($i);

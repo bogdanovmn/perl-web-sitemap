@@ -38,7 +38,7 @@ XML
 }
 
 my $g = Web::Sitemap->new(
-	output_dir => '..', # we don't care
+	output_dir => '..',    # we don't care
 	default_tag => 't',
 	move_from_temp_action => sub {
 		my ($file, $dest) = @_;
