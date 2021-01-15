@@ -25,6 +25,8 @@ sub new {
 	};
 
 	if (not ref $data) {
+		croak 'Web::Sitemap::Url first argument must be defined'
+			unless defined $data;
 		$self->{loc} = $data;
 	}
 	elsif (ref $data eq 'HASH') {
@@ -34,7 +36,7 @@ sub new {
 		$self = { %$self, %$data };
 	}
 	else {
-		croak 'Web::Sitemap::Url first argument must be a plain scalar or a hash reference';
+		croak 'Web::Sitemap::Url first argument must be a string or a hash reference';
 	}
 
 	return bless $self, $class;

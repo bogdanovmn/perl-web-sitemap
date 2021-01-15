@@ -1,11 +1,12 @@
 use strict;
 use warnings;
+use utf8;
+use lib 't/lib';
+
 use Test::More;
 use Web::Sitemap;
 use File::Basename;
-use IO::Uncompress::Gunzip qw/gunzip $GunzipError/;
-use Encode qw(decode);
-use utf8;
+use SitemapTesters;
 
 my $index = <<'XML';
 <?xml version="1.0" encoding="UTF-8"?>
@@ -113,21 +114,21 @@ my @img_urls = (
 );
 
 my $g = Web::Sitemap->new(
-	output_dir => '..',
+	output_dir => '..', # we don't care
 	url_limit => 1,
 	file_size_limit => 200,
 	move_from_temp_action => sub {
 		my ($file, $dest) = @_;
 		my $name = basename $dest;
 
-		test_file($file, $index) if $name eq 'sitemap.xml';
-		test_file($file, $test_tag_1) if $name eq 'sitemap.test_tag.1.xml.gz';
-		test_file($file, $test_tag_2) if $name eq 'sitemap.test_tag.2.xml.gz';
-		test_file($file, $test_tag_3) if $name eq 'sitemap.test_tag.3.xml.gz';
-		test_file($file, $test_tag_4) if $name eq 'sitemap.test_tag.4.xml.gz';
-		test_file($file, $with_images_1) if $name eq 'sitemap.with_images.1.xml.gz';
-		test_file($file, $with_images_2) if $name eq 'sitemap.with_images.2.xml.gz';
-		test_file($file, $with_images_3) if $name eq 'sitemap.with_images.3.xml.gz';
+		SitemapTesters::test_file($file, $index) if $name eq 'sitemap.xml';
+		SitemapTesters::test_file($file, $test_tag_1) if $name eq 'sitemap.test_tag.1.xml.gz';
+		SitemapTesters::test_file($file, $test_tag_2) if $name eq 'sitemap.test_tag.2.xml.gz';
+		SitemapTesters::test_file($file, $test_tag_3) if $name eq 'sitemap.test_tag.3.xml.gz';
+		SitemapTesters::test_file($file, $test_tag_4) if $name eq 'sitemap.test_tag.4.xml.gz';
+		SitemapTesters::test_file($file, $with_images_1) if $name eq 'sitemap.with_images.1.xml.gz';
+		SitemapTesters::test_file($file, $with_images_2) if $name eq 'sitemap.with_images.2.xml.gz';
+		SitemapTesters::test_file($file, $with_images_3) if $name eq 'sitemap.with_images.3.xml.gz';
 	},
 );
 
@@ -136,20 +137,3 @@ $g->add(\@img_urls, tag => 'with_images');
 $g->finish;
 
 done_testing 16;
-
-sub test_file {
-	my ($name, $expected) = @_;
-
-	ok -f $name, "file exists";
-	my $contents;
-	gunzip $name => \$contents
-		or die "gunzip failed: $GunzipError";
-
-	# decode, gunzip does not decode
-	$contents = decode('utf-8', $contents);
-
-	# add a newline here because HEREDOCs always include it
-	$contents .= "\n";
-
-	is $contents, $expected, "file content ok";
-}

@@ -95,7 +95,7 @@ sub new {
 sub add {
 	my ($self, $url_list, %p) = @_;
 
-	my $tag = $p{tag} || $self->{tag};
+	my $tag = $p{tag} || $self->{default_tag};
 
 	if (ref $url_list ne 'ARRAY') {
 		croak 'The list of sitemap URLs must be array ref';
