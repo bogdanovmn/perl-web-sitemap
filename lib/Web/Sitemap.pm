@@ -277,54 +277,55 @@ sub _file_name {
 
 __END__
 
+=pod
+
+=encoding utf8
+
 =head1 NAME
 
 Web::Sitemap - Simple way to generate sitemap files with paging support
 
 =head1 SYNOPSIS
 
-Each instance of the class Web::Sitemap is manage of one index file.
-Now it always use Gzip compress.
-
 	use Web::Sitemap;
 
 	my $sm = Web::Sitemap->new(
-	output_dir => '/path/for/sitemap',
+		output_dir => '/path/for/sitemap',
 
-	### Options ###
+		### Options ###
 
-	temp_dir    => '/path/to/tmp',
-	loc_prefix  => 'http://my_doamin.com',
-	index_name  => 'sitemap',
-	file_prefix => 'sitemap.',
+		temp_dir    => '/path/to/tmp',
+		loc_prefix  => 'http://my_domain.com',
+		index_name  => 'sitemap',
+		file_prefix => 'sitemap.',
 
-	# mark for grouping urls
-	default_tag => 'my_tag',
+		# mark for grouping urls
+		default_tag => 'my_tag',
 
 
-	# add <mobile:mobile/> inside <url>, and appropriate namespace (Google standard)
-	mobile      => 1,
+		# add <mobile:mobile/> inside <url>, and appropriate namespace (Google standard)
+		mobile      => 1,
 
-	# add appropriate namespace (Google standard)
-	images      => 1,
+		# add appropriate namespace (Google standard)
+		images      => 1,
 
-	# additional namespaces (scalar or array ref) for <urlset>
-	namespace   => 'xmlns:some_namespace_name="..."',
+		# additional namespaces (scalar or array ref) for <urlset>
+		namespace   => 'xmlns:some_namespace_name="..."',
 
-	# location prefix for files-parts of the sitemap (default is loc_prefix value)
-	file_loc_prefix  => 'http://my_doamin.com',
+		# location prefix for files-parts of the sitemap (default is loc_prefix value)
+		file_loc_prefix  => 'http://my_domain.com',
 
-	# specify data input charset
-	charset => 'utf8',
+		# specify data input charset
+		charset => 'utf8',
 
-	move_from_temp_action => sub {
-		my ($temp_file_name, $public_file_name) = @_;
+		move_from_temp_action => sub {
+			my ($temp_file_name, $public_file_name) = @_;
 
-		# ...some action...
-		#
-		# default behavior is
-		# File::Copy::move($temp_file_name, $public_file_name);
-	}
+			# ...some action...
+			#
+			# default behavior is
+			# File::Copy::move($temp_file_name, $public_file_name);
+		}
 
 	);
 
@@ -337,7 +338,7 @@ Now it always use Gzip compress.
 	$sm->add(\@url_list2, tag => 'users');
 
 
-	# If in the process of filling the file number of URL's will exceed the limit of 50 000 URL or the file size is larger than 10MB, the file will be rotate
+	# If in the process of filling the file number of URL's will exceed the limit of 50 000 URL or the file size is larger than 50MB, the file will be rotate
 
 	$sm->add(\@url_list3, tag => 'articles');
 
@@ -348,99 +349,171 @@ Now it always use Gzip compress.
 
 =head1 DESCRIPTION
 
-Also support for Google images format:
+This module is an utility for generating indexed sitemaps.
 
-	my @img_urls = (
+Each sitemap file can have up to 50 000 URLs or up to 50MB in size (after decompression) according to L<sitemaps.org|https://www.sitemaps.org/faq.html#faq_sitemap_size>. Any page that exceeds that limit must use L<sitemap index files|https://www.sitemaps.org/protocol.html#index> instead.
 
-		# Foramt 1
-		{
-			loc => 'http://test1.ru/',
-			images => {
-				caption_format => sub {
-					my ($iterator_value) = @_;
-					return sprintf('Vasya - foto %d', $iterator_value);
-				},
-				loc_list => [
-					'http://img1.ru/',
-					'http://img2.ru'
-				]
-			}
-		},
+Web::Sitemap generates a single sitemap index with links to multiple sitemap pages. The pages are automatically split when they reach the limit and are always gzip compressed. Files are created in form of temporary files and copied over to the destination directory, but the copy action can be hooked into to change that behavior.
 
-		# Foramt 2
-		{
-			loc => 'http://test11.ru/',
-			images => {
-				caption_format_simple => 'Vasya - foto',
-				loc_list => ['http://img11.ru/', 'http://img21.ru']
-			}
-		},
+=head1 INTERFACE
 
-		# Format 3
-		{
-			loc => 'http://test122.ru/',
-			images => {
-				loc_list => [
-					{ loc => 'http://img122.ru/', caption => 'image #1' },
-					{ loc => 'http://img133.ru/', caption => 'image #2' },
-					{ loc => 'http://img144.ru/', caption => 'image #3' },
-					{ loc => 'http://img222.ru', caption => 'image #4' }
-				]
-			}
+Web::Sitemap only provides OO interface.
+
+=head2 Methods
+
+=head3 new
+
+	my $sitemap = Web::Sitemap->new(output_dir => $dirname, %options);
+
+Constructs a new Web::Sitemap object that will generate the sitemap.
+
+Files will be put into I<output_dir>. This argument is required.
+
+Other optional arguments include:
+
+=over
+
+=item * C<temp_dir>
+
+Path to a temporary directory. Must already exist and be
+writable. If not specified, a new temporary directory will be created using
+L<File::Temp>.
+
+=item * C<loc_prefix>
+
+A location prefix for all the urls in the sitemap, like
+I<'http://my_domain.com'>. Defaults to an empty string.
+
+=item * C<index_name>
+
+Name of the sitemap index (basename without the extension).
+Defaults to I<'sitemap'>.
+
+=item * C<file_prefix>
+
+Prefix for all sitemap files containing URLs. Defaults to
+I<'sitemap.'>.
+
+=item * C<default_tag>
+
+A default tag that will be used for grouping URLs in files
+when they are added without an explicit tag. Defaults to I<'pages'>.
+
+=item * C<mobile>
+
+Will add a mobile namespace to the sitemap files, and each URL will
+contain C<< <mobile:mobile/> >>. This is a Google standard. Disabled by
+default.
+
+=item * C<images>
+
+Will add images namespace to the sitemap files. This is a Google
+standard. Disabled by default.
+
+=item * C<namespace>
+
+Additional namespaces to be added to the sitemap files. This can
+be a string or an array reference containing strings. Empty by default.
+
+=item * C<file_loc_prefix>
+
+A prefix that will be put before the filenames in the
+sitemap index. This will not cause files to be put in a different directory,
+will only affect the sitemap index. Defaults to the value of C<loc_prefix>.
+
+=item * C<charset>
+
+Encoding to be used for writing the files. Defaults to I<'utf8'>.
+
+=item * C<move_from_temp_action>
+
+A coderef that will change how the files are handled
+after successful generation. Will be called once for each generated file and be
+passed these arguments: C<$temporary_file_path, $destination_file_path>.
+
+By default it will copy the files using I<File::Copy::move>.
+
+=back
+
+=head3 add
+
+	$sitemap->add(\@links, tag => $tagname);
+
+Adds more links to the sitemap under I<$tagname> (can be ommited - defaults to
+C<pages> or the one specified in the constructor).
+
+Links can be simple scalars (URL strings) or a hashref. See
+L<Web::Sitemap::Url/new> for a list of possible hashref arguments.
+
+Can be called multiple times.
+
+=head3 finish
+
+	$sitemap->finish;
+
+Finalizes the sitemap creation and calls the function to move temporary files
+to the output directory.
+
+=head1 EXAMPLES
+
+=head2 Support for Google images format
+
+=head3 Format 1
+
+	$sitemap->add([{
+		loc => 'http://test1.ru/',
+		images => {
+			caption_format => sub {
+				my ($iterator_value) = @_;
+				return sprintf('Vasya - foto %d', $iterator_value);
+			},
+			loc_list => [
+				'http://img1.ru/',
+				'http://img2.ru'
+			]
 		}
-	);
+	}]);
 
+=head3 Format 2
 
-	# Result:
+	$sitemap->add([{
+		loc => 'http://test11.ru/',
+		images => {
+			caption_format_simple => 'Vasya - foto',
+			loc_list => ['http://img11.ru/', 'http://img21.ru']
+		}
+	}]);
 
-	<?xml version="1.0" encoding="UTF-8"?>
-	<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-	<url>
-		<loc>http://test1.ru/</loc>
-		<image:image>
-			<loc>http://img1.ru/</loc>
-			<caption><![CDATA[Vasya - foto 1]]></caption>
-		</image:image>
-		<image:image>
-			<loc>http://img2.ru</loc>
-			<caption><![CDATA[Vasya - foto 2]]></caption>
-		</image:image>
-	</url>
-	<url>
-		<loc>http://test11.ru/</loc>
-		<image:image>
-			<loc>http://img11.ru/</loc>
-			<caption><![CDATA[Vasya - foto 1]]></caption>
-		</image:image>
-		<image:image>
-			<loc>http://img21.ru</loc>
-			<caption><![CDATA[Vasya - foto 2]]></caption>
-		</image:image>
-	</url>
-	<url>
-		<loc>http://test122.ru/</loc>
-		<image:image>
-			<loc>http://img122.ru/</loc>
-			<caption><![CDATA[image #1]]></caption>
-		</image:image>
-		<image:image>
-			<loc>http://img133.ru/</loc>
-			<caption><![CDATA[image #2]]></caption>
-		</image:image>
-		<image:image>
-			<loc>http://img144.ru/</loc>
-			<caption><![CDATA[image #3]]></caption>
-		</image:image>
-		<image:image>
-			<loc>http://img222.ru</loc>
-			<caption><![CDATA[image #4]]></caption>
-		</image:image>
-	</url>
-	</urlset>
+=head3 Format 3
+
+	$sitemap->add([{
+		loc => 'http://test122.ru/',
+		images => {
+			loc_list => [
+				{ loc => 'http://img122.ru/', caption => 'image #1' },
+				{ loc => 'http://img133.ru/', caption => 'image #2' },
+				{ loc => 'http://img144.ru/', caption => 'image #3' },
+				{ loc => 'http://img222.ru', caption => 'image #4' }
+			]
+		}
+	}]);
+);
 
 =head1 AUTHOR
 
 Mikhail N Bogdanov C<< <mbogdanov at cpan.org > >>
+
+=head1 CONTRIBUTORS
+
+In no particular order:
+
+Ivan Bessarabov
+
+Bartosz Jarzyna (@brtastic)
+
+=head1 LICENSE
+
+This module and all the packages in this module are governed by the same license as Perl itself.
 
 =cut
 
