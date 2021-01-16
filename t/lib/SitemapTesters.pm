@@ -26,12 +26,22 @@ sub _get_test_file_contents
 	return $contents;
 }
 
+
+# unify line endings
+sub _ule($)
+{
+	my $string = shift;
+	$string =~ s{\r\n}{\n}g;
+
+	return $string;
+}
+
 sub test_file
 {
 	my ($name, $expected) = @_;
 
 	my $contents = _get_test_file_contents($name);
-	is $contents, $expected, "file content ok";
+	is _ule $contents, _ule $expected, "file content ok";
 }
 
 sub test_big_file
@@ -39,7 +49,7 @@ sub test_big_file
 	my ($name, $expected) = @_;
 
 	my $contents = _get_test_file_contents($name);
-	ok $contents eq $expected, "big file content ok";
+	ok _ule $contents eq _ule $expected, "big file content ok";
 }
 
 sub new_dies

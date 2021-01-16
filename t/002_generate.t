@@ -8,8 +8,9 @@ use Web::Sitemap;
 use File::Basename;
 use SitemapTesters;
 
-my $index = <<'XML';
-<?xml version="1.0" encoding="UTF-8"?>
+# try a carriage return - we should not care, so this should pass
+my $index = <<"XML";
+<?xml version="1.0" encoding="UTF-8"?>\r
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <sitemap><loc>/sitemap.test_tag.1.xml.gz</loc></sitemap>
 <sitemap><loc>/sitemap.test_tag.2.xml.gz</loc></sitemap>
